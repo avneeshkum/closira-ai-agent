@@ -71,7 +71,9 @@ LEAD QUALIFICATION QUESTIONS (ask one at a time naturally if they are looking to
 - Have you ever had any aesthetic treatments before?
 - What day or time works best for your appointment?
 
-RESPONSE FORMAT - always reply with valid JSON only, no markdown fences:
+CRITICAL: You must output your thoughts and state inside a valid JSON format container. Do not output text outside of the JSON template block.
+
+RESPONSE FORMAT:
 {{
   "message": "Your response to the customer",
   "stage": "faq|qualification|escalation|summary",
@@ -95,7 +97,8 @@ def call_groq(messages: list, max_tokens: int = 600, temperature: float = 0.3) -
         "model": MODEL,
         "messages": messages,
         "max_tokens": max_tokens,
-        "temperature": temperature
+        "temperature": temperature,
+        "response_format": {"type": "json_object"}
     }
     resp = requests.post(GROQ_URL, headers=headers, json=payload, timeout=30)
     resp.raise_for_status()
@@ -195,6 +198,7 @@ async def chat(req: ChatRequest):
             data["escalation_reason"] = "more than 2 unanswered questions"
 
         if data.get("escalate"):
+            data["stage"] = "escalation"
             log_escalation(req.session_id, req.message, data.get("escalation_reason", "unknown"))
 
         return {
@@ -221,6 +225,7 @@ async def generate_summary(req: SummaryRequest):
         ])
 
         prompt = f"""Based on this customer conversation, generate a structured summary.
+You must output a raw valid JSON object. Do not output any prose, explanations, or markdown wrappers.
 
 CONVERSATION:
 {conversation_text}
@@ -228,7 +233,7 @@ CONVERSATION:
 LEAD DATA COLLECTED:
 {json.dumps(req.lead_data, indent=2)}
 
-Return ONLY valid JSON with no markdown fences:
+Strictly follow this structure:
 {{
   "customer_intent": "What the customer was looking for",
   "key_details": ["detail 1", "detail 2"],
@@ -240,14 +245,25 @@ Return ONLY valid JSON with no markdown fences:
   "escalated": false
 }}"""
 
-        raw = call_groq([{"role": "user", "content": prompt}], temperature=0.2)
+        # explicitly configuration change to force json response format
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 800,
+            "temperature": 0.2,
+            "response_format": {"type": "json_object"} # JSON mode forced here too
+        }
+        
+        resp = requests.post(GROQ_URL, headers=headers, json=payload, timeout=30)
+        resp.raise_for_status()
+        raw = resp.json()["choices"][0]["message"]["content"].strip()
+        
         summary = parse_json_response(raw)
         return summary
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/sop")
-def get_sop():
-    return SOP
