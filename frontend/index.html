@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aria — Bloom Aesthetics AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #FAF7F2;
+    --warm-white: #FFFDF9;
+    --blush: #E8C4B8;
+    --rose: #C97B6E;
+    --rose-deep: #A85A4E;
+    --sage: #8FA68E;
+    --charcoal: #2C2825;
+    --muted: #8A7F79;
+    --border: #EDE8E1;
+    --bubble-ai: #FFFFFF;
+    --bubble-user: #2C2825;
+    --shadow: 0 4px 32px rgba(44,40,37,0.06);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--charcoal);
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: 
+      radial-gradient(ellipse 50% 50% at 80% 10%, rgba(232,196,184,0.3) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 10% 80%, rgba(143,166,142,0.15) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .workspace {
+    position: relative; z-index: 1;
+    width: 95vw;
+    max-width: 1400px;
+    height: 90vh;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    background: rgba(255, 253, 249, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .chat-section {
+    display: flex;
+    flex-direction: column;
+    background: var(--warm-white);
+    border-right: 1px solid var(--border);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand { display: flex; align-items: center; gap: 14px; }
+  
+  .avatar {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--blush), var(--rose));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 600;
+    color: white;
+    box-shadow: 0 2px 12px rgba(201,123,110,0.25);
+  }
+
+  .brand-text h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .brand-text p { font-size: 12px; color: var(--muted); font-weight: 300; }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    background: rgba(143,166,142,0.12);
+    border: 1px solid rgba(143,166,142,0.3);
+    border-radius: 100px;
+    font-size: 12px; color: var(--sage); font-weight: 500;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    background: var(--sage);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .stage-bar {
+    display: flex; gap: 8px;
+    padding: 12px 28px;
+    background: rgba(250,247,242,0.4);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .stage-step {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 11px; font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border: 1px solid transparent;
+  }
+
+  .stage-step.active { background: var(--charcoal); color: white; }
+  .stage-step.done { background: rgba(143,166,142,0.15); color: var(--sage); border-color: rgba(143,166,142,0.25); }
+
+  .chat-area {
+    flex: 1; overflow-y: auto;
+    padding: 28px;
+    display: flex; flex-direction: column;
+    gap: 16px;
+  }
+
+  .welcome { text-align: center; padding: 24px 16px; animation: fadeIn 0.5s ease; }
+  .welcome-logo { font-family: 'Cormorant Garamond', serif; font-size: 40px; color: var(--blush); margin-bottom: 8px; }
+  .welcome h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; font-style: italic; margin-bottom: 8px; }
+  .welcome p { font-size: 13px; color: var(--muted); max-width: 380px; margin: 0 auto 20px; line-height: 1.6; }
+
+  .chip {
+    padding: 8px 16px; background: white; border: 1px solid var(--border);
+    border-radius: 100px; font-size: 12px; cursor: pointer; transition: var(--transition);
+    display: inline-block; margin: 4px;
+  }
+  .chip:hover { border-color: var(--rose); color: var(--rose); transform: translateY(-1px); }
+
+  .message { display: flex; gap: 10px; max-width: 80%; animation: fadeIn 0.3s ease; }
+  .message.user { align-self: flex-end; flex-direction: row-reverse; }
+  .message.ai { align-self: flex-start; }
+
+  .msg-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;
+  }
+  .message.ai .msg-avatar { background: linear-gradient(135deg, var(--blush), var(--rose)); color: white; }
+  .message.user .msg-avatar { background: var(--charcoal); color: var(--cream); }
+
+  .bubble { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; font-weight: 300; }
+  .message.ai .bubble { background: var(--bubble-ai); border: 1px solid var(--border); border-bottom-left-radius: 4px; box-shadow: 0 1px 6px rgba(44,40,37,0.02); }
+  .message.user .bubble { background: var(--bubble-user); color: var(--cream); border-bottom-right-radius: 4px; }
+
+  .escalation-alert {
+    display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px;
+    background: rgba(168,90,78,0.06); border: 1px solid rgba(168,90,78,0.2); border-radius: 12px; align-self: stretch;
+  }
+  .escalation-alert h4 { font-size: 13px; font-weight: 600; color: var(--rose-deep); margin-bottom: 4px; }
+  .escalation-alert p { font-size: 12px; color: var(--muted); }
+
+  .typing { display: flex; gap: 10px; align-items: center; align-self: flex-start; }
+  .typing-dots { display: flex; gap: 4px; padding: 12px 16px; background: white; border: 1px solid var(--border); border-radius: 18px; border-bottom-left-radius: 4px; }
+  .dot { width: 7px; height: 7px; background: var(--blush); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-6px);} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(0.8);} }
+
+  .summary-panel { background: white; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; align-self: stretch; }
+  .summary-header { padding: 12px 18px; background: var(--charcoal); color: white; font-family: 'Cormorant Garamond', serif; font-style: italic; }
+  .summary-body { padding: 16px 18px; font-size: 13px; }
+  .summary-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .summary-label { font-weight: 500; color: var(--muted); min-width: 110px; font-size: 11px; text-transform: uppercase; padding-top: 2px; }
+  .summary-val { font-size: 13px; color: var(--charcoal); font-weight: 400; flex: 1; }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 500; margin: 2px; }
+  .tag.gap { background: rgba(201,123,110,0.1); color: var(--rose-deep); }
+  .tag.detail { background: rgba(143,166,142,0.12); color: var(--sage); }
+
+  footer { padding: 18px 28px; background: var(--warm-white); border-top: 1px solid var(--border); }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  textarea { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: rgba(250,247,242,0.4); resize: none; outline: none; max-height: 90px; line-height: 1.5; }
+  textarea:focus { border-color: var(--rose); background: white; }
+
+  .footer-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+  .btn-action { background: white; color: var(--muted); border: 1px solid var(--border); font-size: 12px; padding: 6px 14px; border-radius: 100px; cursor: pointer; transition: var(--transition); }
+  .btn-action:hover { border-color: var(--charcoal); color: var(--charcoal); }
+
+  .telemetry-section {
+    display: flex;
+    flex-direction: column;
+    background: rgba(44, 40, 37, 0.02);
+    padding: 24px;
+    gap: 20px;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .panel-title {
+    font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--muted); letter-spacing: 0.08em;
+  }
+
+  .console-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .console {
+    flex: 1;
+    background: #1C1917;
+    border-radius: 16px;
+    padding: 16px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    overflow-y: auto;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .log-line {
+    line-height: 1.4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    animation: logFade 0.2s ease-out;
+  }
+
+  @keyframes logFade { from { opacity: 0; transform: translateX(5px); } to { opacity: 1; transform: translateX(0); } }
+  .log-line.info { border-color: var(--sage); color: #A2E0A2; background: rgba(143,166,142,0.04); }
+  .log-line.error { border-color: var(--rose); color: #FFA3A3; background: rgba(201,123,110,0.08); font-weight: bold; box-shadow: 0 0 10px rgba(201,123,110,0.1); }
+  .log-time { color: #6B6661; margin-right: 6px; font-size: 10px; }
+
+  .state-matrix {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .matrix-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--border);
+  }
+  .matrix-row:last-child { border: none; padding-bottom: 0; }
+  .matrix-label { color: var(--muted); }
+  .matrix-value { font-weight: 500; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(44,40,37,0.4); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal { background: var(--warm-white); border: 1px solid var(--border); padding: 28px; border-radius: 20px; max-width: 420px; width: 90%; }
+  .modal-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
+  .modal-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 100px; margin-bottom: 14px; outline: none; font-family: 'DM Sans', sans-serif; font-size: 13px; }
+  .modal-input:focus { border-color: var(--rose); }
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <h3 style="font-family:'Cormorant Garamond',serif; font-size:24px; margin-bottom:6px;">Initialize Aria Pipeline</h3>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:20px;">Enter your backend URL and Groq API key to activate the full pipeline.</p>
+
+    <label class="modal-label">Backend URL</label>
+    <input type="text" id="apiUrl" class="modal-input" value="http://localhost:8000" placeholder="http://localhost:8000" />
+
+    <label class="modal-label">Groq API Key <span style="color:var(--rose);">*</span> <span style="font-size:10px; color:var(--muted); text-transform:none;">(required for Summary button)</span></label>
+    <input type="password" id="groqKey" class="modal-input" placeholder="gsk_..." />
+
+    <button class="btn-action" style="width:100%; background:var(--charcoal); color:white; padding:12px; border-radius:100px;" onclick="saveConfig()">Connect →</button>
+  </div>
+</div>
+
+<div class="workspace">
+  
+  <section class="chat-section">
+    <header>
+      <div class="brand">
+        <div class="avatar">A</div>
+        <div class="brand-text">
+          <h1>Aria</h1>
+          <p>Bloom Aesthetics · Reception Agent</p>
+        </div>
+      </div>
+      <div class="status-pill"><div class="status-dot"></div> Live</div>
+    </header>
+
+    <div class="stage-bar">
+      <div class="stage-step active" id="stage-faq">❓ FAQ</div>
+      <div class="stage-step" id="stage-qualification">👤 Capture</div>
+      <div class="stage-step" id="stage-escalation">🔁 Handoff</div>
+      <div class="stage-step" id="stage-summary">📋 Summary</div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="welcome" id="welcomeChat">
+        <div class="welcome-logo">✦</div>
+        <h2>Aria Ingestion Layer</h2>
+        <p>Trigger structured assignment state evaluations directly via standard execution vectors below.</p>
+        <div class="quick-chips">
+          <div class="chip" onclick="sendQuick('What are your Botox prices?')">💉 Botox prices</div>
+          <div class="chip" onclick="sendQuick('Can you give medical advice for rashes?')">⚠️ Medical advice</div>
+          <div class="chip" onclick="sendQuick('I want to complain about bad service')">😟 Complain</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="input-row">
+        <textarea id="msgInput" rows="1" placeholder="Type customer response packet..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="btn-action" id="sendBtn" style="background:var(--charcoal); color:white; padding:12px 20px; border-radius:12px;" onclick="sendMessage()">Commit</button>
+      </div>
+      <div class="footer-actions">
+        <button class="btn-action" onclick="newSession()">↺ Flush Buffer</button>
+        <button class="btn-action" onclick="getSummary()">📋 Materialize Summary</button>
+      </div>
+    </footer>
+  </section>
+
+  <section class="telemetry-section">
+    
+    <div class="console-wrapper">
+      <div class="panel-title">Real-time Stream Console</div>
+      <div class="console" id="consoleLogs">
+        <div class="log-line info"><span class="log-time">[INIT]</span> Telemetry system initialized. Listening for message pipeline metrics.</div>
+      </div>
+    </div>
+
+    <div class="state-wrapper">
+      <div class="panel-title" style="margin-bottom:8px;">Running Pipeline State Matrix</div>
+      <div class="state-matrix">
+        <div class="matrix-row">
+          <div class="matrix-label">Current Stage Flag</div>
+          <div class="matrix-value" id="lblStage" style="text-transform:uppercase; color:var(--rose-deep);">FAQ</div>
+        </div>
+        <div class="matrix-row">
+          <div class="matrix-label">Out-of-SOP Buffer</div>
+          <div class="matrix-value" id="lblCount">0 / 2</div>
+        </div>
+        <div class="matrix-row">
+          <div class="matrix-label">Handoff Triggers</div>
+          <div class="matrix-value" id="lblHandoff" style="color:var(--sage);">False</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-wrapper">
+      <div class="panel-title" style="margin-bottom:8px;">Extracted Pipeline Entities</div>
+      <div class="state-matrix" id="leadMatrixBox">
+        <div style="font-size:12px; color:var(--muted); font-style:italic; text-align:center;">No entities tracked yet.</div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<script>
+let API_URL = 'http://localhost:8000';
+let GROQ_API_KEY = '';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
+
+let conversationHistory = [];
+let leadData = {};
+let currentStage = 'faq';
+let unansweredCount = 0;
+let sessionId = 'session_' + Date.now();
+
+function saveConfig() {
+  const url = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('groqKey').value.trim();
+  if (url) API_URL = url;
+  if (key) GROQ_API_KEY = key;
+  document.getElementById('configModal').style.display = 'none';
+  logStream('Pipeline initialized. Backend: ' + API_URL + (GROQ_API_KEY ? ' | Groq key loaded ✓' : ' | No Groq key — Summary will use backend'), 'info');
+}
+
+function logStream(msg, type = 'info') {
+  const consoleEl = document.getElementById('consoleLogs');
+  const line = document.createElement('div');
+  const timestamp = new Date().toLocaleTimeString();
+  line.className = `log-line ${type === 'error' ? 'error' : 'info'}`;
+  line.innerHTML = `<span class="log-time">[${timestamp}]</span> ${msg}`;
+  consoleEl.appendChild(line);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 90) + 'px';
+}
+
+function sendQuick(text) {
+  document.getElementById('msgInput').value = text;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const welcome = document.getElementById('welcomeChat');
+  if (welcome) welcome.remove();
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  appendMessage('user', msg);
+  conversationHistory.push({ role: 'user', content: msg });
+  logStream(`Ingested customer payload: "${msg}"`, 'info');
+
+  showTyping();
+
+  try {
+    const res = await fetch(`${API_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        conversation_history: conversationHistory,
+        session_id: sessionId,
+        lead_data: leadData,
+        unanswered_count: unansweredCount
+      })
+    });
+
+    const data = await res.json();
+    removeTyping();
+
+    appendMessage('ai', data.message);
+    conversationHistory.push({ role: 'assistant', content: data.message });
+
+    if (data.lead_data) {
+      leadData = { ...leadData, ...data.lead_data };
+      syncLeadMatrix();
+    }
+    if (data.unanswered_count !== undefined) {
+      unansweredCount = data.unanswered_count;
+      document.getElementById('lblCount').innerText = `${unansweredCount} / 2`;
+    }
+    if (data.stage) {
+      updateStage(data.stage);
+      document.getElementById('lblStage').innerText = data.stage;
+    }
+    if (data.escalate) {
+      showEscalation(data.escalation_reason || 'Boundary violation rule matched');
+      updateStage('escalation');
+      document.getElementById('lblHandoff').innerText = 'TRUE';
+      document.getElementById('lblHandoff').style.color = 'var(--rose-deep)';
+      logStream(`ESCALATION: ${data.escalation_reason} — Routing to human queue.`, 'error');
+    }
+
+  } catch (err) {
+    removeTyping();
+    appendMessage('ai', '⚠️ Could not reach backend. Make sure the server is running.');
+    logStream('ERROR: Backend connection failed.', 'error');
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('chatArea').scrollTop = 99999;
+}
+
+function syncLeadMatrix() {
+  const box = document.getElementById('leadMatrixBox');
+  if (Object.keys(leadData).length === 0) return;
+  box.innerHTML = '';
+  for (const [k, v] of Object.entries(leadData)) {
+    box.innerHTML += `<div class="matrix-row"><div class="matrix-label">${k.replace(/_/g,' ')}</div><div class="matrix-value">${v || '—'}</div></div>`;
+  }
+}
+
+function appendMessage(role, text) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  div.innerHTML = `
+    <div class="msg-avatar">${role === 'ai' ? 'A' : 'U'}</div>
+    <div class="bubble">${text.replace(/\n/g, '<br>')}</div>
+  `;
+  area.appendChild(div);
+  area.scrollTop = 99999;
+}
+
+function showTyping() {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'typing'; div.id = 'typingIndicator';
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:linear-gradient(135deg,#E8C4B8,#C97B6E);color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:13px;">A</div>
+    <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  `;
+  area.appendChild(div);
+  area.scrollTop = 99999;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingIndicator');
+  if (t) t.remove();
+}
+
+function showEscalation(reason) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'escalation-alert';
+  div.innerHTML = `
+    <div style="font-size:18px;">🔔</div>
+    <div>
+      <h4>Human Intervention Triggered</h4>
+      <p>Reason: <strong>${reason}</strong> — Routed to human queue.</p>
+    </div>
+  `;
+  area.appendChild(div);
+  area.scrollTop = 99999;
+}
+
+function updateStage(stage) {
+  currentStage = stage;
+  document.querySelectorAll('.stage-step').forEach(el => el.classList.remove('active', 'done'));
+  const stages = ['faq', 'qualification', 'escalation', 'summary'];
+  const idx = stages.indexOf(stage);
+  stages.forEach((s, i) => {
+    const el = document.getElementById(`stage-${s}`);
+    if (!el) return;
+    if (i < idx) el.classList.add('done');
+    else if (i === idx) el.classList.add('active');
+  });
+}
+
+// ─── SUMMARY — calls Groq directly if API key is set, else falls back to backend ───
+async function getSummary() {
+  if (conversationHistory.length === 0) {
+    appendMessage('ai', 'No conversation to summarise yet. Start chatting first!');
+    return;
+  }
+
+  showTyping();
+  updateStage('summary');
+  document.getElementById('lblStage').innerText = 'SUMMARY';
+  logStream('Generating conversation summary...', 'info');
+
+  // ── Path A: Groq API key present → call Groq directly ──
+  if (GROQ_API_KEY) {
+    try {
+      const conversationText = conversationHistory
+        .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+        .join('\n');
+
+      const prompt = `Based on this customer conversation for Bloom Aesthetics Clinic, generate a structured summary.
+
+CONVERSATION:
+${conversationText}
+
+LEAD DATA COLLECTED:
+${JSON.stringify(leadData, null, 2)}
+
+Return ONLY valid JSON with no markdown fences:
+{
+  "customer_intent": "What the customer was looking for",
+  "key_details": ["detail 1", "detail 2"],
+  "sop_gaps": ["Any questions the AI could not answer from the SOP"],
+  "lead_qualified": true,
+  "lead_summary": {"treatment_interested": "", "prior_experience": "", "preferred_timing": ""},
+  "recommended_action": "Next step for the human agent",
+  "sentiment": "positive|neutral|negative",
+  "escalated": false
+}`;
+
+      const res = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 800,
+          temperature: 0.2
+        })
+      });
+
+      const groqData = await res.json();
+      const rawText = groqData.choices[0].message.content.trim();
+
+      // Strip markdown fences if present
+      let jsonText = rawText;
+      if (jsonText.includes('```')) {
+        const parts = jsonText.split('```');
+        for (const part of parts) {
+          const clean = part.startsWith('json') ? part.slice(4).trim() : part.trim();
+          try { JSON.parse(clean); jsonText = clean; break; } catch {}
+        }
+      }
+
+      const summary = JSON.parse(jsonText);
+      removeTyping();
+      renderSummary(summary);
+      logStream('Summary generated via Groq directly ✓', 'info');
+
+    } catch (err) {
+      removeTyping();
+      logStream('Groq direct call failed: ' + err.message, 'error');
+      appendMessage('ai', '⚠️ Summary generation failed. Check your Groq API key.');
+    }
+
+  // ── Path B: No Groq key → fall back to backend /summary endpoint ──
+  } else {
+    try {
+      const res = await fetch(`${API_URL}/summary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversation_history: conversationHistory, lead_data: leadData })
+      });
+      const data = await res.json();
+      removeTyping();
+      renderSummary(data);
+      logStream('Summary generated via backend ✓', 'info');
+    } catch (err) {
+      removeTyping();
+      appendMessage('ai', '⚠️ Backend unreachable. Enter your Groq API key in settings for standalone summary.');
+      logStream('Backend summary failed. Tip: add Groq key on startup for standalone mode.', 'error');
+    }
+  }
+}
+
+function renderSummary(s) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'summary-panel';
+
+  const gaps = (s.sop_gaps || []).map(g => `<span class="tag gap">${g}</span>`).join('') || '<span class="tag detail">None</span>';
+  const details = (s.key_details || []).map(d => `<span class="tag detail">${d}</span>`).join('') || '—';
+  const sentiment = s.sentiment === 'positive' ? '😊 Positive' : s.sentiment === 'negative' ? '😟 Negative' : '😐 Neutral';
+
+  div.innerHTML = `
+    <div class="summary-header">✦ Compiled Operational Summary Report</div>
+    <div class="summary-body">
+      <div class="summary-row"><div class="summary-label">Intent</div><div class="summary-val">${s.customer_intent || '—'}</div></div>
+      <div class="summary-row"><div class="summary-label">Key Details</div><div class="summary-val">${details}</div></div>
+      <div class="summary-row"><div class="summary-label">SOP Gaps</div><div class="summary-val">${gaps}</div></div>
+      <div class="summary-row"><div class="summary-label">Qualified</div><div class="summary-val">${s.lead_qualified ? '✅ Yes' : '❌ No'}</div></div>
+      <div class="summary-row"><div class="summary-label">Sentiment</div><div class="summary-val">${sentiment}</div></div>
+      <div class="summary-row"><div class="summary-label">Next Human Step</div><div class="summary-val"><strong>${s.recommended_action || '—'}</strong></div></div>
+    </div>
+  `;
+  area.appendChild(div);
+  area.scrollTop = 99999;
+}
+
+function newSession() {
+  if (conversationHistory.length > 0 && !confirm('Reset conversation?')) return;
+  conversationHistory = [];
+  leadData = {};
+  unansweredCount = 0;
+  sessionId = 'session_' + Date.now();
+  currentStage = 'faq';
+
+  document.getElementById('lblCount').innerText = '0 / 2';
+  document.getElementById('lblStage').innerText = 'FAQ';
+  document.getElementById('lblHandoff').innerText = 'False';
+  document.getElementById('lblHandoff').style.color = 'var(--sage)';
+  document.getElementById('leadMatrixBox').innerHTML = `<div style="font-size:12px; color:var(--muted); font-style:italic; text-align:center;">No entities tracked yet.</div>`;
+
+  updateStage('faq');
+  logStream('Session reset.', 'info');
+
+  document.getElementById('chatArea').innerHTML = `
+    <div class="welcome" id="welcomeChat">
+      <div class="welcome-logo">✦</div>
+      <h2>Aria Ingestion Layer</h2>
+      <p>Trigger structured assignment state evaluations directly via standard execution vectors below.</p>
+      <div class="quick-chips">
+        <div class="chip" onclick="sendQuick('What are your Botox prices?')">💉 Botox prices</div>
+        <div class="chip" onclick="sendQuick('Can you give medical advice for rashes?')">⚠️ Medical advice</div>
+        <div class="chip" onclick="sendQuick('I want to complain about bad service')">😟 Complain</div>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
